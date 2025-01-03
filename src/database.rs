@@ -1,9 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::error::NotionError;
 use crate::request::RequestBuilder;
-use crate::response::{ListResponse, ObjectResponse};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Database {
@@ -57,21 +55,19 @@ impl Database {
     }
 
     pub fn create_request(parent_page_id: &str, title: &str, properties: Value) -> RequestBuilder {
-        let mut builder = RequestBuilder::new("/databases");
-        let body = serde_json::json!({
-            "parent": { "type": "page_id", "page_id": parent_page_id },
-            "title": [{
-                "type": "text",
-                "text": { "content": title }
-            }],
-            "properties": properties
-        });
-        builder.method("POST").body(body);
-        builder
+        RequestBuilder::new("/databases")
+            .method("POST")
+            .json_body(serde_json::json!({
+                "parent": { "type": "page_id", "page_id": parent_page_id },
+                "title": [{
+                    "type": "text",
+                    "text": { "content": title }
+                }],
+                "properties": properties
+            }))
     }
 
     pub fn update_request(database_id: &str, title: Option<&str>, properties: Option<Value>) -> RequestBuilder {
-        let mut builder = RequestBuilder::new(&format!("/databases/{}", database_id));
         let mut body = serde_json::Map::new();
         
         if let Some(title_str) = title {
@@ -85,13 +81,14 @@ impl Database {
             body.insert("properties".to_string(), props);
         }
         
-        builder.method("PATCH").body(serde_json::Value::Object(body));
-        builder
+        RequestBuilder::new(&format!("/databases/{}", database_id))
+            .method("PATCH")
+            .json_body(serde_json::Value::Object(body))
     }
 
     pub fn query_request(database_id: &str, query: DatabaseQuery) -> RequestBuilder {
-        let mut builder = RequestBuilder::new(&format!("/databases/{}/query", database_id));
-        builder.method("POST").body(query);
-        builder
+        RequestBuilder::new(&format!("/databases/{}/query", database_id))
+            .method("POST")
+            .json_body(serde_json::to_value(query).unwrap())
     }
 }

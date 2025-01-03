@@ -6,6 +6,8 @@ use std::collections::HashMap;
 pub struct RequestBuilder {
     /// The API endpoint path
     endpoint: String,
+    /// HTTP method for the request
+    method: String,
     /// Query parameters for the request
     query_params: HashMap<String, String>,
     /// JSON body for POST/PATCH requests
@@ -17,6 +19,7 @@ impl RequestBuilder {
     pub fn new(endpoint: &str) -> Self {
         Self {
             endpoint: endpoint.to_string(),
+            method: "GET".to_string(),
             query_params: HashMap::new(),
             body: None,
         }
@@ -77,5 +80,16 @@ impl RequestBuilder {
     /// Returns the request body if set
     pub fn get_body(&self) -> Option<&Value> {
         self.body.as_ref()
+    }
+
+    /// Sets the HTTP method for the request
+    pub fn method(mut self, method: &str) -> Self {
+        self.method = method.to_string();
+        self
+    }
+
+    /// Gets the HTTP method for the request
+    pub fn get_method(&self) -> &str {
+        &self.method
     }
 }

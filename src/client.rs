@@ -4,9 +4,10 @@ use serde_json::Value;
 use std::time::Duration;
 use tokio::time::sleep;
 
+use crate::database::{Database, DatabaseQuery};
 use crate::error::NotionError;
 use crate::request::RequestBuilder;
-use crate::response::RetryConfig;
+use crate::response::{ListResponse, ObjectResponse, RetryConfig};
 
 const NOTION_API_BASE: &str = "https://api.notion.com/v1";
 
@@ -266,5 +267,49 @@ impl NotionClient {
                     .to_string(),
             });
         }
+    }
+
+    /// Lists all databases shared with the integration
+    pub async fn list_databases(&self) -> Result<ListResponse<Database>, NotionError> {
+        let request = Database::list_request();
+        self.get(request).await
+    }
+
+    /// Retrieves a database by ID
+    pub async fn get_database(&self, database_id: &str) -> Result<ObjectResponse<Database>, NotionError> {
+        let request = Database::get_request(database_id);
+        self.get(request).await
+    }
+
+    /// Creates a new database
+    pub async fn create_database(
+        &self,
+        parent_page_id: &str,
+        title: &str,
+        properties: serde_json::Value,
+    ) -> Result<ObjectResponse<Database>, NotionError> {
+        let request = Database::create_request(parent_page_id, title, properties);
+        self.post(request).await
+    }
+
+    /// Updates an existing database
+    pub async fn update_database(
+        &self,
+        database_id: &str,
+        title: Option<&str>,
+        properties: Option<serde_json::Value>,
+    ) -> Result<ObjectResponse<Database>, NotionError> {
+        let request = Database::update_request(database_id, title, properties);
+        self.patch(request).await
+    }
+
+    /// Queries a database with optional filters, sorting, and pagination
+    pub async fn query_database(
+        &self,
+        database_id: &str,
+        query: DatabaseQuery,
+    ) -> Result<ListResponse<Database>, NotionError> {
+        let request = Database::query_request(database_id, query);
+        self.post(request).await
     }
 }

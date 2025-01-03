@@ -1,10 +1,12 @@
 pub mod client;
+pub mod database;
 pub mod error;
 pub mod request;
 pub mod response;
 
 // Re-export commonly used items
 pub use client::NotionClient;
+pub use database::Database;
 pub use error::NotionError;
 pub use request::RequestBuilder;
 
