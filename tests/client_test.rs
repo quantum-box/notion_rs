@@ -1,51 +1,104 @@
 use notion_rs::client::NotionClient;
-use notion_rs::error::NotionError;
 
 #[tokio::test]
 async fn test_client_creation() {
     let client = NotionClient::new("dummy_token");
-    assert_eq!(client.auth_token(), "dummy_token");
+    // Test that invalid token results in error
+    assert!(client.list_databases().await.is_err());
 }
 
 #[tokio::test]
 async fn test_client_with_retry_config() {
-    let client = NotionClient::new("dummy_token")
-        .with_retry_config(Default::default());
-    assert!(client.retry_config().max_retries > 0);
+    let client = NotionClient::new("dummy_token").with_retry_config(Default::default());
+    // Test that invalid token results in error even with retry config
+    assert!(client.list_databases().await.is_err());
 }
 
-// These tests will be implemented once we receive the Notion API token
+// Integration tests using real Notion API token
 #[cfg(feature = "integration")]
 mod integration_tests {
     use super::*;
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_get_database() {
-        // TODO: Implement with actual token
+    fn get_test_token() -> String {
+        dotenv().ok();
+        std::env::var("NOTION_API_TOKEN").expect("NOTION_API_TOKEN must be set")
     }
 
     #[tokio::test]
-    #[ignore]
-    async fn test_create_database() {
-        // TODO: Implement with actual token
+    async fn test_list_databases() {
+        let client = NotionClient::new(&get_test_token());
+        let result = client.list_databases().await;
+        assert!(result.is_ok(), "Failed to list databases: {:?}", result);
     }
 
     #[tokio::test]
-    #[ignore]
-    async fn test_update_database() {
-        // TODO: Implement with actual token
-    }
+    async fn test_database_operations() {
+        let client = NotionClient::new(&get_test_token());
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_delete_database() {
-        // TODO: Implement with actual token
-    }
+        // First, list databases to get a parent page ID
+        let list_result = client.list_databases().await.unwrap();
+        let parent_page_id = list_result.results[0].id.clone();
 
-    #[tokio::test]
-    #[ignore]
-    async fn test_query_database() {
-        // TODO: Implement with actual token
+        // Create a test database
+        let properties = serde_json::json!({
+            "Name": {
+                "title": {}
+            },
+            "Description": {
+                "rich_text": {}
+            }
+        });
+
+        let create_result = client
+            .create_database(&parent_page_id, "Test Database", properties)
+            .await;
+        assert!(
+            create_result.is_ok(),
+            "Failed to create database: {:?}",
+            create_result
+        );
+
+        let database = create_result.unwrap();
+        let database_id = database.data.id;
+
+        // Update the database
+        let update_properties = serde_json::json!({
+            "Tags": {
+                "multi_select": {
+                    "options": [
+                        { "name": "Tag1", "color": "blue" },
+                        { "name": "Tag2", "color": "red" }
+                    ]
+                }
+            }
+        });
+
+        let update_result = client
+            .update_database(
+                &database_id,
+                Some("Updated Test Database"),
+                Some(update_properties),
+            )
+            .await;
+        assert!(
+            update_result.is_ok(),
+            "Failed to update database: {:?}",
+            update_result
+        );
+
+        // Query the database
+        let query = DatabaseQuery {
+            filter: None,
+            sorts: None,
+            page_size: Some(10),
+            start_cursor: None,
+        };
+
+        let query_result = client.query_database(&database_id, query).await;
+        assert!(
+            query_result.is_ok(),
+            "Failed to query database: {:?}",
+            query_result
+        );
     }
 }

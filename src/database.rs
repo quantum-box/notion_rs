@@ -67,20 +67,27 @@ impl Database {
             }))
     }
 
-    pub fn update_request(database_id: &str, title: Option<&str>, properties: Option<Value>) -> RequestBuilder {
+    pub fn update_request(
+        database_id: &str,
+        title: Option<&str>,
+        properties: Option<Value>,
+    ) -> RequestBuilder {
         let mut body = serde_json::Map::new();
-        
+
         if let Some(title_str) = title {
-            body.insert("title".to_string(), serde_json::json!([{
-                "type": "text",
-                "text": { "content": title_str }
-            }]));
+            body.insert(
+                "title".to_string(),
+                serde_json::json!([{
+                    "type": "text",
+                    "text": { "content": title_str }
+                }]),
+            );
         }
-        
+
         if let Some(props) = properties {
             body.insert("properties".to_string(), props);
         }
-        
+
         RequestBuilder::new(&format!("/databases/{}", database_id))
             .method("PATCH")
             .json_body(serde_json::Value::Object(body))

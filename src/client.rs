@@ -57,7 +57,7 @@ impl NotionClient {
                 .http_client
                 .get(&url)
                 .header("Authorization", format!("Bearer {}", self.auth_token))
-                .header("Notion-Version", "2022-06-28")
+                .header("Notion-Version", "2022-02-22")
                 .send()
                 .await?;
 
@@ -114,7 +114,7 @@ impl NotionClient {
                 .http_client
                 .post(&url)
                 .header("Authorization", format!("Bearer {}", self.auth_token))
-                .header("Notion-Version", "2022-06-28")
+                .header("Notion-Version", "2022-02-22")
                 .json(&body)
                 .send()
                 .await?;
@@ -172,7 +172,7 @@ impl NotionClient {
                 .http_client
                 .patch(&url)
                 .header("Authorization", format!("Bearer {}", self.auth_token))
-                .header("Notion-Version", "2022-06-28")
+                .header("Notion-Version", "2022-02-22")
                 .json(&body)
                 .send()
                 .await?;
@@ -227,7 +227,7 @@ impl NotionClient {
                 .http_client
                 .delete(&url)
                 .header("Authorization", format!("Bearer {}", self.auth_token))
-                .header("Notion-Version", "2022-06-28")
+                .header("Notion-Version", "2022-02-22")
                 .send()
                 .await?;
 
@@ -276,7 +276,10 @@ impl NotionClient {
     }
 
     /// Retrieves a database by ID
-    pub async fn get_database(&self, database_id: &str) -> Result<ObjectResponse<Database>, NotionError> {
+    pub async fn get_database(
+        &self,
+        database_id: &str,
+    ) -> Result<ObjectResponse<Database>, NotionError> {
         let request = Database::get_request(database_id);
         self.get(request).await
     }
