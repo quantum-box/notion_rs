@@ -53,11 +53,11 @@ impl Database {
                 "value": "database"
             }
         });
-        
+
         if let Some(q) = query {
             body["query"] = serde_json::json!(q);
         }
-        
+
         RequestBuilder::new("/search")
             .method("POST")
             .json_body(body)

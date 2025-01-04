@@ -325,7 +325,11 @@ impl NotionClient {
     }
 
     /// Creates a new page as a child of another page
-    pub async fn create_page(&self, parent_page_id: &str, title: &str) -> Result<ObjectResponse<Page>, NotionError> {
+    pub async fn create_page(
+        &self,
+        parent_page_id: &str,
+        title: &str,
+    ) -> Result<ObjectResponse<Page>, NotionError> {
         let request = RequestBuilder::new("/pages")
             .method("POST")
             .json_body(serde_json::json!({
@@ -345,7 +349,11 @@ impl NotionClient {
     }
 
     /// Creates a new page in a database
-    pub async fn create_database_page(&self, database_id: &str, title: &str) -> Result<ObjectResponse<Page>, NotionError> {
+    pub async fn create_database_page(
+        &self,
+        database_id: &str,
+        title: &str,
+    ) -> Result<ObjectResponse<Page>, NotionError> {
         let request = RequestBuilder::new("/pages")
             .method("POST")
             .json_body(serde_json::json!({

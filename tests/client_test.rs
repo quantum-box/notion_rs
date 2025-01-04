@@ -42,9 +42,12 @@ mod integration_tests {
         if databases.results.is_empty() {
             panic!("No databases found in the workspace. Please create at least one database with a 'Name' property in your Notion workspace.");
         }
-        
+
         // Create a page in the existing database to use as our parent
-        let page_result = client.create_database_page(&databases.results[0].id, "Test Parent Page").await.unwrap();
+        let page_result = client
+            .create_database_page(&databases.results[0].id, "Test Parent Page")
+            .await
+            .unwrap();
         let parent_page_id = page_result.data.id.clone();
 
         // Create a test database
