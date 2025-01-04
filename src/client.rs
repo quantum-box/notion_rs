@@ -9,6 +9,14 @@ use crate::error::NotionError;
 use crate::request::RequestBuilder;
 use crate::response::{ListResponse, ObjectResponse, RetryConfig};
 
+/// Page object returned by the Notion API
+#[derive(Debug, serde::Deserialize)]
+pub struct Page {
+    pub id: String,
+    pub parent: serde_json::Value,
+    pub properties: serde_json::Value,
+}
+
 const NOTION_API_BASE: &str = "https://api.notion.com/v1";
 
 /// NotionClient handles all communication with the Notion API
@@ -57,7 +65,7 @@ impl NotionClient {
                 .http_client
                 .get(&url)
                 .header("Authorization", format!("Bearer {}", self.auth_token))
-                .header("Notion-Version", "2022-02-22")
+                .header("Notion-Version", "2022-06-28")
                 .send()
                 .await?;
 
@@ -114,7 +122,7 @@ impl NotionClient {
                 .http_client
                 .post(&url)
                 .header("Authorization", format!("Bearer {}", self.auth_token))
-                .header("Notion-Version", "2022-02-22")
+                .header("Notion-Version", "2022-06-28")
                 .json(&body)
                 .send()
                 .await?;
@@ -172,7 +180,7 @@ impl NotionClient {
                 .http_client
                 .patch(&url)
                 .header("Authorization", format!("Bearer {}", self.auth_token))
-                .header("Notion-Version", "2022-02-22")
+                .header("Notion-Version", "2022-06-28")
                 .json(&body)
                 .send()
                 .await?;
@@ -227,7 +235,7 @@ impl NotionClient {
                 .http_client
                 .delete(&url)
                 .header("Authorization", format!("Bearer {}", self.auth_token))
-                .header("Notion-Version", "2022-02-22")
+                .header("Notion-Version", "2022-06-28")
                 .send()
                 .await?;
 
@@ -272,7 +280,7 @@ impl NotionClient {
     /// Lists all databases shared with the integration
     pub async fn list_databases(&self) -> Result<ListResponse<Database>, NotionError> {
         let request = Database::list_request();
-        self.get(request).await
+        self.post(request).await
     }
 
     /// Retrieves a database by ID
@@ -313,6 +321,46 @@ impl NotionClient {
         query: DatabaseQuery,
     ) -> Result<ListResponse<Database>, NotionError> {
         let request = Database::query_request(database_id, query);
+        self.post(request).await
+    }
+
+    /// Creates a new page as a child of another page
+    pub async fn create_page(&self, parent_page_id: &str, title: &str) -> Result<ObjectResponse<Page>, NotionError> {
+        let request = RequestBuilder::new("/pages")
+            .method("POST")
+            .json_body(serde_json::json!({
+                "parent": { "page_id": parent_page_id },
+                "properties": {
+                    "title": {
+                        "title": [
+                            {
+                                "type": "text",
+                                "text": { "content": title }
+                            }
+                        ]
+                    }
+                }
+            }));
+        self.post(request).await
+    }
+
+    /// Creates a new page in a database
+    pub async fn create_database_page(&self, database_id: &str, title: &str) -> Result<ObjectResponse<Page>, NotionError> {
+        let request = RequestBuilder::new("/pages")
+            .method("POST")
+            .json_body(serde_json::json!({
+                "parent": { "database_id": database_id },
+                "properties": {
+                    "Name": {
+                        "title": [
+                            {
+                                "type": "text",
+                                "text": { "content": title }
+                            }
+                        ]
+                    }
+                }
+            }));
         self.post(request).await
     }
 }
