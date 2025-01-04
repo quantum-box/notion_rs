@@ -46,8 +46,26 @@ pub enum SortDirection {
 }
 
 impl Database {
+    pub fn search_request(query: Option<&str>) -> RequestBuilder {
+        let mut body = serde_json::json!({
+            "filter": {
+                "property": "object",
+                "value": "database"
+            }
+        });
+        
+        if let Some(q) = query {
+            body["query"] = serde_json::json!(q);
+        }
+        
+        RequestBuilder::new("/search")
+            .method("POST")
+            .json_body(body)
+    }
+
     pub fn list_request() -> RequestBuilder {
-        RequestBuilder::new("/databases")
+        // Use search endpoint with database filter instead of deprecated /databases endpoint
+        Self::search_request(None)
     }
 
     pub fn get_request(database_id: &str) -> RequestBuilder {
